@@ -157,6 +157,10 @@ Nirakshak is a functional prototype, not a production system. In particular:
 - Host signalling and TURN services for reliable remote video calls.
 - Add consent, retention, and privacy controls for video and location data.
 
+Demo link for this app-
+
+https://youtu.be/6ZttAsNXPk8
+
 ---
 
 Built as a practical monitoring demo: simple enough to run locally, structured enough to show a complete review-to-action workflow.
