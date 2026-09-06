@@ -53,8 +53,7 @@ If PowerShell blocks `npm` with an execution-policy error, use `npm.cmd` instead
 npm.cmd run signal
 npm.cmd run dev
 
-
-
+```
 Vite will print a local address, usually `http://localhost:5173`. Open it in your browser.
 
 ## Video call setup
