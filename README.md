@@ -45,6 +45,15 @@ npm install
 ```bash
 npm run dev
 ```
+Windows note
+
+If PowerShell blocks `npm` with an execution-policy error, use `npm.cmd` instead. It runs the same npm command through Windows' Command Prompt launcher:
+
+```powershell
+npm.cmd run signal
+npm.cmd run dev
+
+
 
 Vite will print a local address, usually `http://localhost:5173`. Open it in your browser.
 
