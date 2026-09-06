@@ -1,0 +1,106 @@
+export type UserRole = 'dosje' | 'inspector' | 'institute';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  passwordHash: string; // Plaintext for local demo verification
+  role: UserRole;
+  name: string;
+  instituteId?: string; // Links institute users to specific institute profiles
+}
+
+export interface InstituteProfile {
+  id: string;
+  name: string;
+  org: string;
+  location: string;
+  expectedAttendance: number;
+}
+
+export interface ActivityLog {
+  id: string;
+  timestamp: string;
+  actorUsername: string;
+  actorRole: UserRole;
+  action: string;
+  details: string;
+}
+
+// Configurable User Accounts
+export const USERS_CONFIG: UserAccount[] = [
+  {
+    id: 'U1',
+    username: 'dosje_admin',
+    passwordHash: 'admin123',
+    role: 'dosje',
+    name: 'DoSJE Authority Lead'
+  },
+  {
+    id: 'U2',
+    username: 'inspector_a',
+    passwordHash: 'inspect123',
+    role: 'inspector',
+    name: 'Chowki Inspector A'
+  },
+  {
+    id: 'U3',
+    username: 'udaan_rep',
+    passwordHash: 'udaan123',
+    role: 'institute',
+    name: 'Udaan Institute Admin',
+    instituteId: 'INST-001'
+  },
+  {
+    id: 'U4',
+    username: 'asha_rep',
+    passwordHash: 'asha123',
+    role: 'institute',
+    name: 'Asha Kiran Representative',
+    instituteId: 'INST-002'
+  }
+];
+
+// Configurable Institutes Registry
+export const INSTITUTES_CONFIG: Record<string, InstituteProfile> = {
+  'INST-001': {
+    id: 'INST-001',
+    name: 'Saksham Support Centre',
+    org: 'Udaan Foundation',
+    location: 'Jaipur, Rajasthan',
+    expectedAttendance: 42
+  },
+  'INST-002': {
+    id: 'INST-002',
+    name: 'Nayi Disha Learning Hub',
+    org: 'Asha Kiran Trust',
+    location: 'Kota, Rajasthan',
+    expectedAttendance: 28
+  }
+};
+
+// Storage helper for Audit Logs
+export const getAuditLogs = (): ActivityLog[] => {
+  try {
+    return JSON.parse(localStorage.getItem('nigraniAuditLogs') || '[]');
+  } catch {
+    return [];
+  }
+};
+
+export const logActivity = (
+  actorUsername: string,
+  actorRole: UserRole,
+  action: string,
+  details: string
+) => {
+  const logs = getAuditLogs();
+  const newEntry: ActivityLog = {
+    id: 'LOG-' + Date.now(),
+    timestamp: new Date().toLocaleString(),
+    actorUsername,
+    actorRole,
+    action,
+    details
+  };
+  localStorage.setItem('nigraniAuditLogs', JSON.stringify([newEntry, ...logs]));
+};
