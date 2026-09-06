@@ -1,72 +1,162 @@
 # Nirakshak
 
-Nirakshak is a role-based monitoring prototype for social-welfare institutes. It brings together CCTV attendance checks, field-inspection evidence, institute information, and DoSJE review in one small web app.
+> A simple monitoring workspace for social-welfare institutes — from CCTV attendance checks to field evidence and DoSJE review.
 
-It is designed as a local demo: clear workflows, lightweight storage, and no backend required.
+Nirakshak is a role-based prototype built to make monitoring workflows easier to follow and easier to explain. It gives each participant only the tools they need: DoSJE reviews alerts and assigns action, inspectors capture field evidence, and institutes can view their own information and respond with supporting reports.
 
-## What it does
+The project is intentionally lightweight. It runs locally, keeps demo data in the browser, and avoids requiring a cloud account or paid service.
 
-- Signs in three kinds of users: DoSJE, field inspector, and institute representative.
-- Uses browser-based COCO-SSD person detection to estimate attendance from an uploaded CCTV video.
-- Flags major attendance shortfalls for DoSJE review before an inspection can be assigned.
-- Lets inspectors capture a photo, GPS location, and assessment; submitted evidence appears in the DoSJE inspection history.
-- Lets DoSJE open institute profiles and edit basic institute information.
-- Provides an in-browser camera and microphone preview for lightweight video verification.
+## At a glance
 
-## Demo accounts
+- **Three role-based workspaces** — DoSJE, field inspector, and institute representative.
+- **CCTV attendance analysis** — estimates people in an uploaded video with COCO-SSD.
+- **Approval-first workflow** — high attendance shortfalls go to DoSJE before any inspection is assigned.
+- **Field evidence** — inspectors can attach a photo, GPS location, notes, and timestamp.
+- **Inspection history** — DoSJE can review submitted field reports in one place.
+- **Institute profiles** — open an institute to view its latest observation and, for DoSJE, update basic details.
+- **Local video verification** — a lightweight WebRTC call between DoSJE and an institute session.
 
-| Role | Username | Password |
-| --- | --- | --- |
-| DoSJE authority | `dosje_admin` | `admin123` |
-| Field inspector | `inspector_a` | `inspect123` |
-| Institute representative | `udaan_rep` | `udaan123` |
+## Roles and demo accounts
 
-These accounts are intentionally simple and stored in [accounts.csv](accounts.csv). They are suitable for a demo only; do not use plaintext CSV credentials in a real deployment.
+| Role | What they can do | Username | Password |
+| --- | --- | --- | --- |
+| DoSJE authority | Monitor projects, analyse CCTV, approve alerts, edit institute details, review inspection history, start a video check | `dosje_admin` | `admin123` |
+| Field inspector | View assigned duties, capture field evidence, GPS, and submit an inspection report | `inspector_a` | `inspect123` |
+| Institute representative | View institute feedback, submit supporting reports, and answer a video-check request | `udaan_rep` | `udaan123` |
 
-## Run locally
+The demo accounts are stored in [accounts.csv](accounts.csv). They use plaintext passwords because this is a local prototype only — do not use this approach in production.
+
+## Getting started
+
+### Requirements
+
+- Node.js 18 or newer
+- A modern browser (Chrome or Edge recommended for camera, microphone, and location access)
+- A webcam/microphone if you want to test the video call
+
+### Install dependencies
 
 ```bash
 npm install
+```
+
+### Start the app
+
+```bash
 npm run dev
 ```
 
-Open the local Vite address shown in the terminal.
+Vite will print a local address, usually `http://localhost:5173`. Open it in your browser.
 
-To create a production bundle:
+## Video call setup
+
+The video call needs **two terminals** because one runs the app and the other runs a tiny local signalling service.
+
+**Terminal 1 — signalling service**
+
+```bash
+npm run signal
+```
+
+Leave this terminal running.
+
+**Terminal 2 — web app**
+
+```bash
+npm run dev
+```
+
+Then:
+
+1. Open the app for DoSJE and sign in with `dosje_admin`.
+2. Open the app again in another tab, browser profile, or local Vite port, then sign in with `udaan_rep`.
+3. In DoSJE, open **Random VC** and select **Start random VC**.
+4. In the institute session, open **Video call desk** and select **Answer call**.
+5. Allow camera and microphone access in both sessions.
+
+The signalling service only coordinates the connection. Video and audio travel directly between the two browser sessions through WebRTC. This local setup is intended for testing on the same computer.
+
+## Core workflow
+
+1. **DoSJE analyses a CCTV video.** The system samples seven frames and estimates the average number of people visible.
+2. **Nirakshak compares attendance.** The observed average is compared with the institute’s expected attendance.
+3. **High-risk shortfalls go to approval.** DoSJE reviews the alert and can approve an inspection.
+4. **The inspector completes a visit.** They add a photo, GPS location, and assessment notes.
+5. **DoSJE reviews the submitted record.** The evidence appears under **Inspection history**.
+
+## Risk logic
+
+The current risk score is intentionally based only on the information the app actually collects: attendance detected from video.
+
+| Attendance shortfall | Result |
+| --- | --- |
+| Less than 10% | Low risk |
+| 10% to 24% | Medium risk |
+| 25% or more | High risk and a DoSJE approval request |
+
+The app never starts an inspection automatically. A DoSJE user must approve the alert first.
+
+## Data and privacy
+
+Nirakshak saves demo projects, alerts, assignments, reports, and inspection history in the browser’s local storage. This keeps the prototype easy to run, but it also means:
+
+- Data stays on the current browser and device.
+- Clearing browser site data clears the stored demo information.
+- Separate browser profiles may not share the same demo data.
+- It is not a replacement for a secure server-side database.
+
+Camera, microphone, and location permissions are requested only when a related feature is used. Always obtain appropriate consent before capturing or reviewing real people, video footage, or location data.
+
+## Project structure
+
+| File / folder | Purpose |
+| --- | --- |
+| `main.tsx` | React UI, role permissions, workflows, local storage, and WebRTC call setup |
+| `styles.css` | Layout, visual design, responsive styles, and video-call presentation |
+| `accounts.csv` | Local demo user accounts and role mapping |
+| `signal-server.mjs` | Small local signalling service used by the WebRTC call |
+| `index.html` | Vite application entry page |
+| `dist/` | Generated production build output |
+
+## Technology used
+
+- React + TypeScript
+- Vite
+- TensorFlow.js and COCO-SSD for browser-based person detection
+- WebRTC for local video and audio calls
+- Node.js HTTP server for local call signalling
+- Capacitor Camera and Geolocation APIs
+- Lucide icons
+
+## Build for deployment
 
 ```bash
 npx vite build
 ```
 
-## How the risk check works
+The generated files are placed in `dist/`.
 
-The anomaly engine samples seven evenly spaced frames from an uploaded video and counts people in each frame. It compares the detected average with the institute's expected attendance:
+> The video call still requires the local signalling service (`npm run signal`). A public deployment would need a hosted signalling service, HTTPS, authentication, and TURN infrastructure for reliable calls across different networks.
 
-- Less than 10% shortfall: Low risk
-- 10–24% shortfall: Medium risk
-- 25% or more: High risk and an approval request for DoSJE
+## Known limitations
 
-DoSJE must approve the alert before an inspector receives a field assignment. The app does not automatically start inspections.
+Nirakshak is a functional prototype, not a production system. In particular:
 
-## Data and permissions
+- Login credentials are plaintext CSV values.
+- Data is stored only in browser local storage.
+- The video call is intended for local testing, not a multi-user internet deployment.
+- The risk calculation currently focuses on attendance deviation only.
+- No server-side audit log, encryption, access control, or file storage is included.
 
-The prototype stores projects, alerts, assignments, reports, and inspection history in the browser's local storage. Clearing browser data clears this demo data.
+## Next steps for a production version
 
-Camera, microphone, and location access are requested only when the relevant feature is used. The video-call screen is a local camera preview; a real remote call would need a signalling service and backend.
-
-## Project structure
-
-| File | Purpose |
-| --- | --- |
-| `main.tsx` | Application screens, role workflows, and local storage logic |
-| `styles.css` | UI styling and responsive layout |
-| `accounts.csv` | Local demo accounts and roles |
-| `index.html` | Vite entry page |
-
-## Tech stack
-
-React, TypeScript, Vite, TensorFlow.js / COCO-SSD, Capacitor Camera and Geolocation, and Lucide icons.
+- Replace CSV login with secure, server-side authentication.
+- Store users, projects, reports, and evidence in a database.
+- Add encrypted file storage and a tamper-resistant audit trail.
+- Add role management and institute-specific data boundaries.
+- Host signalling and TURN services for reliable remote video calls.
+- Add consent, retention, and privacy controls for video and location data.
 
 ---
 
-Nirakshak is a prototype, not a production monitoring system. A production version should add secure authentication, server-side data storage, audit controls, encryption, consent flows, and a proper video-calling service.
+Built as a practical monitoring demo: simple enough to run locally, structured enough to show a complete review-to-action workflow.
